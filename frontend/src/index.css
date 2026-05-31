@@ -1,0 +1,202 @@
+@import "bootstrap-icons/font/bootstrap-icons.css";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --brand:      #14b574;
+  --brand-dark: #0a9460;
+  --dark:       #0b1120;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  background: #f4f7f5;
+  color: #0b1120;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar        { width: 5px; height: 5px; }
+::-webkit-scrollbar-track  { background: #f1f5f2; }
+::-webkit-scrollbar-thumb  { background: #14b574; border-radius: 6px; }
+
+/* ── Keyframes ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(26px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes floatY {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-11px); }
+}
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+@keyframes shimmer {
+  0%   { background-position: -220% center; }
+  100% { background-position: 220% center; }
+}
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.94) translateY(-6px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+@keyframes spinOnce {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* ── Animation classes ── */
+.anim-fade-up  { opacity: 0; animation: fadeUp 0.60s ease forwards; }
+.anim-fade-in  { animation: fadeIn 0.40s ease forwards; }
+.anim-float    { animation: floatY 5s ease-in-out infinite; }
+.anim-marquee  { animation: marquee 34s linear infinite; }
+.anim-scale-in { animation: scaleIn 0.22s ease forwards; }
+
+.d1 { animation-delay: 0.07s; }
+.d2 { animation-delay: 0.14s; }
+.d3 { animation-delay: 0.21s; }
+.d4 { animation-delay: 0.28s; }
+.d5 { animation-delay: 0.35s; }
+.d6 { animation-delay: 0.42s; }
+
+/* ── Shimmer text ── */
+.shimmer-text {
+  background: linear-gradient(90deg, #14b574 0%, #6ee7b7 35%, #34d399 60%, #14b574 100%);
+  background-size: 220% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 4s linear infinite;
+}
+
+/* ── Glass ── */
+.glass {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+.glass-dark {
+  background: rgba(11, 17, 32, 0.55);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+/* ── Card lift ── */
+.card-lift {
+  transition: transform 0.22s ease, box-shadow 0.22s ease;
+}
+.card-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 36px rgba(20, 181, 116, 0.13);
+}
+
+/* ── Buttons ── */
+.btn-primary {
+  display:         inline-flex;
+  align-items:     center;
+  gap:             7px;
+  background:      linear-gradient(135deg, #14b574 0%, #0a9460 100%);
+  color:           #fff;
+  font-weight:     700;
+  padding:         0.72rem 1.6rem;
+  border-radius:   999px;
+  border:          none;
+  cursor:          pointer;
+  font-family:     inherit;
+  font-size:       0.875rem;
+  line-height:     1;
+  letter-spacing:  0.01em;
+  transition:      transform 0.20s ease, box-shadow 0.20s ease, background 0.20s ease;
+  box-shadow:      0 4px 16px rgba(20, 181, 116, 0.30);
+  text-decoration: none;
+  white-space:     nowrap;
+}
+.btn-primary:hover {
+  transform:   translateY(-2px);
+  box-shadow:  0 8px 24px rgba(20, 181, 116, 0.42);
+}
+.btn-primary:active {
+  transform:  translateY(0);
+  box-shadow: 0 3px 10px rgba(20, 181, 116, 0.25);
+}
+
+.btn-outline-white {
+  display:         inline-flex;
+  align-items:     center;
+  gap:             7px;
+  background:      transparent;
+  color:           #fff;
+  font-weight:     700;
+  padding:         0.72rem 1.6rem;
+  border-radius:   999px;
+  border:          2px solid rgba(255, 255, 255, 0.30);
+  cursor:          pointer;
+  font-family:     inherit;
+  font-size:       0.875rem;
+  line-height:     1;
+  transition:      border-color 0.20s ease, background 0.20s ease;
+  white-space:     nowrap;
+}
+.btn-outline-white:hover {
+  border-color: rgba(255, 255, 255, 0.80);
+  background:   rgba(255, 255, 255, 0.07);
+}
+
+/* ── Dot grid pattern ── */
+.dot-grid {
+  background-image: radial-gradient(circle, rgba(20, 181, 116, 0.09) 1px, transparent 1px);
+  background-size:  34px 34px;
+}
+
+/* ── Pill badge ── */
+.pill-badge {
+  display:       inline-flex;
+  align-items:   center;
+  gap:           5px;
+  border-radius: 999px;
+  font-weight:   700;
+  font-size:     0.7rem;
+  line-height:   1;
+  padding:       0.28rem 0.75rem;
+  letter-spacing: 0.03em;
+}
+
+/* ── Smooth search transition in navbar ── */
+.search-enter {
+  opacity: 0;
+  transform: translateY(-8px) scaleY(0.95);
+}
+.search-enter-active {
+  opacity: 1;
+  transform: translateY(0) scaleY(1);
+  transition: opacity 0.30s ease, transform 0.30s ease;
+}
+.search-exit {
+  opacity: 1;
+  transform: translateY(0) scaleY(1);
+}
+.search-exit-active {
+  opacity: 0;
+  transform: translateY(-8px) scaleY(0.95);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+/* ── Hide scrollbar ── */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* ── Font weight utilities (Plus Jakarta Sans supports 800) ── */
+.font-800 { font-weight: 800; }
+.font-700 { font-weight: 700; }
+.font-600 { font-weight: 600; }
+.font-500 { font-weight: 500; }
