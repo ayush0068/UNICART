@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 
 const DEFAULT = 'Varanasi 221001'
 
@@ -24,6 +26,10 @@ async function ipLocation() {
 }
 
 export default function Navbar({ searchVisible = true }) {
+  const { user, isLoggedIn, logout } = useAuth()
+  const navigate = useNavigate()
+  const [userMenuOpen, setUserMenuOpen] = useState(false)
+  const userMenuRef = useRef(null)
   const [scrolled, setScrolled]       = useState(false)
   const [menuOpen, setMenuOpen]       = useState(false)
   const [searchFocus, setSearchFocus] = useState(false)
@@ -304,12 +310,53 @@ export default function Navbar({ searchVisible = true }) {
                 <i className="bi bi-bell text-lg"></i>
                 <span className="absolute top-2 right-2 w-1.5 h-1.5 bg-red-500 rounded-full"></span>
               </button>
-              <button className="hidden md:flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-xl hover:bg-gray-100 transition-colors">
-                <div className="w-7 h-7 rounded-full bg-brand-100 flex items-center justify-center">
-                  <i className="bi bi-person-fill text-brand-700 text-sm"></i>
+              {isLoggedIn ? (
+                <div className="relative hidden md:block" ref={userMenuRef}>
+                  <button
+                    onClick={() => setUserMenuOpen(o => !o)}
+                    className="flex items-center gap-2 px-2 py-1.5 rounded-xl hover:bg-gray-100 transition-colors"
+                  >
+                    <div className="w-7 h-7 rounded-full bg-brand-500 flex items-center justify-center">
+                      <span className="text-white text-xs font-700">{user?.name?.[0]?.toUpperCase()}</span>
+                    </div>
+                    <span className="text-xs font-600 text-gray-700 max-w-[80px] truncate">{user?.name?.split(' ')[0]}</span>
+                    <i className={`bi bi-chevron-down text-[10px] text-gray-400 transition-transform duration-200 ${userMenuOpen ? 'rotate-180' : ''}`}></i>
+                  </button>
+                  {userMenuOpen && (
+                    <div className="absolute right-0 top-full mt-2 w-52 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-50 anim-scale-in">
+                      <div className="px-4 py-2.5 border-b border-gray-100">
+                        <p className="text-sm font-700 text-gray-900 truncate">{user?.name}</p>
+                        <p className="text-xs text-gray-400 truncate">{user?.email}</p>
+                      </div>
+                      {[
+                        { icon: 'bi-person',        label: 'My Profile',    path: '/profile' },
+                        { icon: 'bi-bag',           label: 'My Orders',     path: '/orders'  },
+                        { icon: 'bi-file-medical',  label: 'Prescriptions', path: '/prescriptions' },
+                      ].map((item, i) => (
+                        <button key={i} onClick={() => { navigate(item.path); setUserMenuOpen(false) }}
+                          className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 transition-colors text-left">
+                          <i className={`bi ${item.icon} text-gray-400 text-sm`}></i>
+                          <span className="text-sm font-500 text-gray-700">{item.label}</span>
+                        </button>
+                      ))}
+                      <div className="border-t border-gray-100 mt-1 pt-1">
+                        <button onClick={() => { logout(); setUserMenuOpen(false) }}
+                          className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-red-50 transition-colors text-left">
+                          <i className="bi bi-box-arrow-right text-red-400 text-sm"></i>
+                          <span className="text-sm font-500 text-red-500">Logout</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <span className="text-[10px] font-600 text-gray-400">Login</span>
-              </button>
+              ) : (
+                <Link to="/login" className="hidden md:flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-xl hover:bg-gray-100 transition-colors">
+                  <div className="w-7 h-7 rounded-full bg-brand-100 flex items-center justify-center">
+                    <i className="bi bi-person-fill text-brand-700 text-sm"></i>
+                  </div>
+                  <span className="text-[10px] font-600 text-gray-400">Login</span>
+                </Link>
+              )}
               <button className="relative flex items-center justify-center w-10 h-10 rounded-xl hover:bg-gray-100 transition-colors">
                 <i className="bi bi-cart3 text-xl text-gray-700"></i>
                 <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] bg-brand-500 text-white text-[10px] font-700 rounded-full flex items-center justify-center px-0.5">3</span>
@@ -360,7 +407,17 @@ export default function Navbar({ searchVisible = true }) {
               ))}
             </div>
             <div className="flex gap-2 pt-1">
-              <button className="flex-1 btn-primary justify-center text-sm py-2.5">Login / Sign Up</button>
+              {isLoggedIn ? (
+                <button onClick={() => { logout(); setMenuOpen(false) }}
+                  className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-red-50 border border-red-200 text-red-600 font-700 text-sm rounded-full">
+                  <i className="bi bi-box-arrow-right"></i> Logout
+                </button>
+              ) : (
+                <Link to="/login" onClick={() => setMenuOpen(false)}
+                  className="flex-1 btn-primary justify-center text-sm py-2.5 text-center">
+                  Login / Sign Up
+                </Link>
+              )}
               <button className="flex-1 border-2 border-brand-400 text-brand-600 font-700 text-sm py-2.5 rounded-full flex items-center justify-center gap-1.5 hover:bg-brand-50 transition-colors">
                 <i className="bi bi-upload"></i> Upload Rx
               </button>
