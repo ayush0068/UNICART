@@ -1,30 +1,75 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+import { medicineApi } from '../services/api'
 
-const products = [
-  { id:1, name:'Paracetamol 650mg', brand:'Crocin', category:'Fever & Pain', price:45, mrp:55, discount:18, rating:4.7, reviews:2340, prescription:false, icon:'bi-capsule', badge:'Bestseller', badgeColor:'bg-brand-500' },
-  { id:2, name:'Vitamin D3 60K IU', brand:'Sun Pharma', category:'Vitamins', price:110, mrp:145, discount:24, rating:4.8, reviews:1820, prescription:false, icon:'bi-sun', badge:'Top Rated', badgeColor:'bg-yellow-500' },
-  { id:3, name:'Amoxicillin 500mg', brand:'Cipla', category:'Antibiotic', price:120, mrp:150, discount:20, rating:4.6, reviews:980, prescription:true, icon:'bi-prescription2', badge:'Rx Required', badgeColor:'bg-red-500' },
-  { id:4, name:'Azithromycin 500mg', brand:'Abbott', category:'Antibiotic', price:95, mrp:115, discount:17, rating:4.5, reviews:1450, prescription:true, icon:'bi-prescription', badge:'Rx Required', badgeColor:'bg-red-500' },
-  { id:5, name:'Omega-3 Fish Oil', brand:'HealthKart', category:'Supplements', price:499, mrp:699, discount:29, rating:4.9, reviews:3210, prescription:false, icon:'bi-droplet', badge:'New', badgeColor:'bg-blue-500' },
-  { id:6, name:'Metformin 500mg', brand:'USV', category:'Diabetes', price:68, mrp:85, discount:20, rating:4.7, reviews:2100, prescription:true, icon:'bi-activity', badge:'Rx Required', badgeColor:'bg-red-500' },
-  { id:7, name:'Cetirizine 10mg', brand:'Alkem', category:'Allergy', price:38, mrp:50, discount:24, rating:4.6, reviews:1670, prescription:false, icon:'bi-wind', badge:'Bestseller', badgeColor:'bg-brand-500' },
-  { id:8, name:'Multivitamin Daily', brand:'Revital H', category:'Vitamins', price:320, mrp:420, discount:24, rating:4.8, reviews:4500, prescription:false, icon:'bi-stars', badge:'Popular', badgeColor:'bg-violet-500' },
-]
+/* ── Category icon mapping (fallback when no image) ── */
+const CATEGORY_ICONS = {
+  'Pain Relief':           'bi-capsule',
+  'Fever':                 'bi-thermometer-half',
+  'Antibiotics':           'bi-prescription2',
+  'Vitamins & Supplements':'bi-stars',
+  'Diabetes':              'bi-activity',
+  'Heart Care':            'bi-heart-pulse',
+  'Skincare':              'bi-bandaid',
+  'Baby Care':             'bi-person-hearts',
+  'Ayurveda':              'bi-flower1',
+  'Cold & Cough':          'bi-wind',
+  'Digestive':             'bi-egg-fried',
+  'Eye Care':              'bi-eye',
+  'Dental':                'bi-stars',
+  'Mental Wellness':       'bi-brain',
+  'Sports & Fitness':      'bi-trophy',
+  'Nutrition':             'bi-egg-fried',
+  'Sexual Wellness':       'bi-heart',
+  'Lab Tests':             'bi-clipboard2-pulse',
+  'Other':                 'bi-box',
+}
+
+/* ── Format date as DD MMM YYYY ── */
+function fmtDate(dateStr) {
+  if (!dateStr) return null
+  return new Date(dateStr).toLocaleDateString('en-IN', {
+    day: '2-digit', month: 'short', year: 'numeric',
+  })
+}
+
+/* ── Expiry badge color ── */
+function expiryBadge(expiryDate) {
+  if (!expiryDate) return null
+  const days = Math.ceil((new Date(expiryDate) - new Date()) / (1000 * 60 * 60 * 24))
+  if (days < 0)   return { label: 'Expired',        cls: 'bg-red-100 text-red-700 border-red-200' }
+  if (days <= 30) return { label: `Exp in ${days}d`, cls: 'bg-orange-100 text-orange-700 border-orange-200' }
+  if (days <= 90) return { label: `Exp: ${fmtDate(expiryDate)}`, cls: 'bg-yellow-100 text-yellow-700 border-yellow-200' }
+  return null   // far-future expiry — no badge needed
+}
 
 function ProductCard({ product }) {
   const [wished, setWished] = useState(false)
-  const [added, setAdded]   = useState(false)
+  const [added,  setAdded]  = useState(false)
 
   const handleAdd = () => {
     setAdded(true)
     setTimeout(() => setAdded(false), 2000)
   }
 
+  const icon    = CATEGORY_ICONS[product.category] || 'bi-capsule'
+  const expBadge = expiryBadge(product.expiryDate)
+
   return (
     <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden card-lift group relative flex flex-col">
-      <span className={`absolute top-3 left-3 z-10 ${product.badgeColor} text-white text-[10px] font-800 px-2.5 py-1 rounded-full`}>
-        {product.badge}
-      </span>
+      {/* Featured badge */}
+      {product.isFeatured && (
+        <span className="absolute top-3 left-3 z-10 bg-brand-500 text-white text-[10px] font-800 px-2.5 py-1 rounded-full">
+          Featured
+        </span>
+      )}
+
+      {/* Expiry warning badge */}
+      {expBadge && (
+        <span className={`absolute top-3 ${product.isFeatured ? 'left-[80px]' : 'left-3'} z-10 text-[10px] font-700 px-2 py-1 rounded-full border ${expBadge.cls}`}>
+          <i className="bi bi-clock me-1"></i>{expBadge.label}
+        </span>
+      )}
+
       <button
         onClick={() => setWished(!wished)}
         className="absolute top-3 right-3 z-10 w-8 h-8 bg-white rounded-full shadow-md flex items-center justify-center transition-all hover:scale-110"
@@ -32,11 +77,19 @@ function ProductCard({ product }) {
         <i className={`bi ${wished ? 'bi-heart-fill text-red-500' : 'bi-heart text-gray-400'} text-sm`}></i>
       </button>
 
-      {/* Product visual */}
+      {/* Product visual — image or icon fallback */}
       <div className="h-32 bg-gradient-to-br from-gray-50 to-brand-50 flex items-center justify-center group-hover:scale-[1.03] transition-transform duration-300 overflow-hidden">
-        <div className="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center">
-          <i className={`bi ${product.icon} text-brand-500 text-2xl`}></i>
-        </div>
+        {product.images?.length > 0 ? (
+          <img
+            src={product.images[0].url}
+            alt={product.name}
+            className="h-full w-full object-contain"
+          />
+        ) : (
+          <div className="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center">
+            <i className={`bi ${icon} text-brand-500 text-2xl`}></i>
+          </div>
+        )}
       </div>
 
       <div className="p-4 flex flex-col flex-1">
@@ -44,43 +97,115 @@ function ProductCard({ product }) {
         <h3 className="text-sm font-700 text-gray-900 mt-0.5 leading-snug">{product.name}</h3>
         <p className="text-[11px] text-gray-400 mt-0.5">{product.category}</p>
 
-        <div className="flex items-center gap-1.5 mt-2">
-          <div className="flex items-center gap-1 bg-green-50 px-1.5 py-0.5 rounded-md">
-            <i className="bi bi-star-fill text-green-600 text-[10px]"></i>
-            <span className="text-[11px] font-700 text-green-700">{product.rating}</span>
-          </div>
-          <span className="text-[11px] text-gray-400">({product.reviews.toLocaleString()})</span>
-        </div>
+        {/* Pack size + unit */}
+        {product.packSize && (
+          <p className="text-[10px] text-gray-500 mt-0.5">
+            <i className="bi bi-box me-1"></i>{product.packSize}
+          </p>
+        )}
 
+        {/* Rating */}
+        {product.numReviews > 0 && (
+          <div className="flex items-center gap-1.5 mt-2">
+            <div className="flex items-center gap-1 bg-green-50 px-1.5 py-0.5 rounded-md">
+              <i className="bi bi-star-fill text-green-600 text-[10px]"></i>
+              <span className="text-[11px] font-700 text-green-700">{product.rating}</span>
+            </div>
+            <span className="text-[11px] text-gray-400">({product.numReviews.toLocaleString()})</span>
+          </div>
+        )}
+
+        {/* Price */}
         <div className="flex items-baseline gap-2 mt-3">
           <span className="text-base font-800 text-gray-900">₹{product.price}</span>
-          <span className="text-xs text-gray-400 line-through">₹{product.mrp}</span>
-          <span className="text-xs font-700 text-brand-600">{product.discount}% off</span>
+          {product.mrp > product.price && (
+            <>
+              <span className="text-xs text-gray-400 line-through">₹{product.mrp}</span>
+              <span className="text-xs font-700 text-brand-600">{product.discount}% off</span>
+            </>
+          )}
         </div>
 
-        {product.prescription && (
+        {/* MFG / Expiry mini info */}
+        <div className="mt-2 space-y-0.5">
+          {product.mfgDate && (
+            <p className="text-[10px] text-gray-400">
+              <span className="font-600 text-gray-500">Mfd:</span> {fmtDate(product.mfgDate)}
+            </p>
+          )}
+          {product.expiryDate && (
+            <p className="text-[10px] text-gray-400">
+              <span className="font-600 text-gray-500">Exp:</span> {fmtDate(product.expiryDate)}
+            </p>
+          )}
+          {product.batchNumber && (
+            <p className="text-[10px] text-gray-400">
+              <span className="font-600 text-gray-500">Batch:</span> {product.batchNumber}
+            </p>
+          )}
+        </div>
+
+        {/* Prescription label */}
+        {product.requiresPrescription && (
           <div className="mt-2 inline-flex items-center gap-1 text-[10px] text-red-600 font-700 bg-red-50 border border-red-100 rounded-lg px-2 py-1">
             <i className="bi bi-file-medical"></i> Prescription Required
           </div>
         )}
 
+        {/* Stock warning */}
+        {product.stock > 0 && product.stock <= 10 && (
+          <p className="mt-1 text-[10px] text-orange-600 font-600">
+            Only {product.stock} left!
+          </p>
+        )}
+
         <button
           onClick={handleAdd}
+          disabled={product.stock === 0}
           className={`mt-auto pt-3 w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-700 transition-all duration-300 ${
-            added
+            product.stock === 0
+              ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+              : added
               ? 'bg-brand-500 text-white shadow-md'
               : 'border-2 border-gray-200 text-gray-700 hover:border-brand-400 hover:text-brand-600 hover:bg-brand-50'
           }`}
         >
-          <i className={`bi ${added ? 'bi-check2-circle' : 'bi-cart-plus'} text-base`}></i>
-          {added ? 'Added to Cart!' : 'Add to Cart'}
+          <i className={`bi ${product.stock === 0 ? 'bi-x-circle' : added ? 'bi-check2-circle' : 'bi-cart-plus'} text-base`}></i>
+          {product.stock === 0 ? 'Out of Stock' : added ? 'Added to Cart!' : 'Add to Cart'}
         </button>
       </div>
     </div>
   )
 }
 
+/* ── Skeleton loader ── */
+function ProductSkeleton() {
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden animate-pulse">
+      <div className="h-32 bg-gray-100"></div>
+      <div className="p-4 space-y-2">
+        <div className="h-3 bg-gray-100 rounded w-1/3"></div>
+        <div className="h-4 bg-gray-100 rounded w-3/4"></div>
+        <div className="h-3 bg-gray-100 rounded w-1/2"></div>
+        <div className="h-5 bg-gray-100 rounded w-1/4 mt-3"></div>
+        <div className="h-9 bg-gray-100 rounded-xl mt-3"></div>
+      </div>
+    </div>
+  )
+}
+
 export default function FeaturedProducts() {
+  const [medicines, setMedicines] = useState([])
+  const [loading,   setLoading]   = useState(true)
+  const [error,     setError]     = useState(null)
+
+  useEffect(() => {
+    medicineApi.getFeatured()
+      .then(res => setMedicines(res.data || []))
+      .catch(err => setError(err.message))
+      .finally(() => setLoading(false))
+  }, [])
+
   return (
     <section className="max-w-7xl mx-auto px-4 sm:px-6 pb-14">
       <div className="flex items-center justify-between mb-6">
@@ -92,9 +217,29 @@ export default function FeaturedProducts() {
           View All <i className="bi bi-chevron-right text-xs"></i>
         </button>
       </div>
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 md:gap-4">
-        {products.map(p => <ProductCard key={p.id} product={p} />)}
-      </div>
+
+      {error && (
+        <div className="text-center py-10 text-red-500">
+          <i className="bi bi-exclamation-triangle text-3xl"></i>
+          <p className="mt-2 text-sm">{error}</p>
+        </div>
+      )}
+
+      {!error && (
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 md:gap-4">
+          {loading
+            ? Array.from({ length: 8 }).map((_, i) => <ProductSkeleton key={i} />)
+            : medicines.length === 0
+            ? (
+              <div className="col-span-full text-center py-14 text-gray-400">
+                <i className="bi bi-box text-4xl"></i>
+                <p className="mt-2 text-sm">No featured medicines yet. Admin se kaho add kare!</p>
+              </div>
+            )
+            : medicines.map(p => <ProductCard key={p._id} product={p} />)
+          }
+        </div>
+      )}
     </section>
   )
 }

@@ -94,10 +94,24 @@ export const addReview = asyncHandler(async (req, res) => {
   res.status(201).json({ success: true, message: 'Review added', rating: medicine.rating, numReviews: medicine.numReviews })
 })
 
+/* ─────────────────────────────────────────────
+   ADMIN ROUTES
+───────────────────────────────────────────── */
+
 /* ── ADMIN: POST /api/medicines ── */
 export const createMedicine = asyncHandler(async (req, res) => {
   const data = { ...req.body }
   data.slug  = toSlug(`${data.name}-${data.brand}-${data.packSize || ''}`)
+
+  // Parse dates if sent as strings
+  if (data.mfgDate)    data.mfgDate    = new Date(data.mfgDate)
+  if (data.expiryDate) data.expiryDate = new Date(data.expiryDate)
+
+  // Parse numeric fields that may arrive as strings from form-data
+  if (data.price)      data.price      = Number(data.price)
+  if (data.mrp)        data.mrp        = Number(data.mrp)
+  if (data.stock)      data.stock      = Number(data.stock)
+  if (data.gstPercent) data.gstPercent = Number(data.gstPercent)
 
   if (req.files?.length) {
     data.images = req.files.map(f => ({
@@ -112,7 +126,13 @@ export const createMedicine = asyncHandler(async (req, res) => {
 
 /* ── ADMIN: PUT /api/medicines/:id ── */
 export const updateMedicine = asyncHandler(async (req, res) => {
-  const medicine = await Medicine.findByIdAndUpdate(req.params.id, req.body, {
+  const updates = { ...req.body }
+
+  // Parse dates if sent as strings
+  if (updates.mfgDate)    updates.mfgDate    = new Date(updates.mfgDate)
+  if (updates.expiryDate) updates.expiryDate = new Date(updates.expiryDate)
+
+  const medicine = await Medicine.findByIdAndUpdate(req.params.id, updates, {
     new: true, runValidators: true,
   })
   if (!medicine) { res.status(404); throw new Error('Medicine not found') }
@@ -126,4 +146,18 @@ export const deleteMedicine = asyncHandler(async (req, res) => {
   medicine.isActive = false
   await medicine.save()
   res.json({ success: true, message: 'Medicine removed' })
+})
+
+/* ── ADMIN: GET /api/medicines/admin/near-expiry ── */
+export const getNearExpiryMedicines = asyncHandler(async (req, res) => {
+  const { days = 90 } = req.query
+  const cutoff = new Date()
+  cutoff.setDate(cutoff.getDate() + Number(days))
+
+  const medicines = await Medicine.find({
+    isActive:   true,
+    expiryDate: { $lte: cutoff, $gte: new Date() },
+  }).sort({ expiryDate: 1 }).select('-reviews')
+
+  res.json({ success: true, count: medicines.length, data: medicines })
 })

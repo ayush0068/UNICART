@@ -45,6 +45,16 @@ const medicineSchema = new mongoose.Schema({
   howToUse:     { type: String, default: '' },
   storageInfo:  { type: String, default: 'Store below 25°C' },
 
+  // ── Manufacturing & Expiry Details (Admin adds these) ──
+  mfgDate:         { type: Date, default: null },          // Manufacturing date
+  expiryDate:      { type: Date, default: null },          // Expiry date
+  batchNumber:     { type: String, default: '', trim: true }, // Batch / Lot number
+  countryOfOrigin: { type: String, default: 'India', trim: true },
+  fssaiLicense:    { type: String, default: '', trim: true }, // FSSAI/Drug license no.
+  hsn:             { type: String, default: '', trim: true }, // HSN code for GST
+  gstPercent:      { type: Number, default: 12, min: 0, max: 100 }, // GST %
+  shelfLife:       { type: String, default: '' },          // e.g. "24 months"
+
   tags:         [String],
 
   reviews:      [reviewSchema],
@@ -66,6 +76,19 @@ medicineSchema.pre('save', function (next) {
   next()
 })
 
+/* virtual: is medicine expired? */
+medicineSchema.virtual('isExpired').get(function () {
+  if (!this.expiryDate) return false
+  return new Date() > new Date(this.expiryDate)
+})
+
+/* virtual: days until expiry */
+medicineSchema.virtual('daysUntilExpiry').get(function () {
+  if (!this.expiryDate) return null
+  const diff = new Date(this.expiryDate) - new Date()
+  return Math.ceil(diff / (1000 * 60 * 60 * 24))
+})
+
 /* update rating on review change */
 medicineSchema.methods.updateRating = function () {
   if (this.reviews.length === 0) {
@@ -77,8 +100,12 @@ medicineSchema.methods.updateRating = function () {
   }
 }
 
+medicineSchema.set('toJSON',   { virtuals: true })
+medicineSchema.set('toObject', { virtuals: true })
+
 medicineSchema.index({ name: 'text', genericName: 'text', brand: 'text', saltName: 'text', tags: 'text' })
 medicineSchema.index({ category: 1, isActive: 1 })
 medicineSchema.index({ slug: 1 })
+medicineSchema.index({ expiryDate: 1 })   // admin can quickly query near-expiry stock
 
 export default mongoose.model('Medicine', medicineSchema)
