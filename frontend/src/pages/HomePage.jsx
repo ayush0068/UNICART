@@ -6,7 +6,6 @@ import Categories from '../components/Categories'
 import FeaturedProducts from '../components/FeaturedProducts'
 import UploadPrescription from '../components/UploadPrescription'
 import WhyMediCart from '../components/WhyMediCart'
-import Testimonials from '../components/Testimonials'
 import Footer from '../components/Footer'
 
 export default function HomePage({ searchVisible, onSearchVisibilityChange }) {
@@ -21,7 +20,6 @@ export default function HomePage({ searchVisible, onSearchVisibilityChange }) {
         <FeaturedProducts />
         <UploadPrescription />
         <WhyMediCart />
-        <Testimonials />
       </main>
       <Footer />
     </div>
